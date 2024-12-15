@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
-import { LoginCredentials, RegisterCredentials } from '@/types/auth';
+import { LoginCredentials, RegisterCredentials, VerifyEmailCredentials, ForgotPasswordCredentials, ResetPasswordCredentials } from '@/types/auth';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -13,10 +13,12 @@ interface AuthContextType {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => void;
-  verifyEmail: (otp: string) => Promise<void>;
-  resendOtp: () => Promise<void>;
+  verifyEmail: (credentials: VerifyEmailCredentials) => Promise<void>;
+  resendOtp: (email: string) => Promise<void>;
   setError: (error: string | null) => void;
   setAlertType: (type: 'error' | 'success') => void;
+  forgotPassword: (credentials: ForgotPasswordCredentials) => Promise<void>;
+  resetPassword: (credentials: ResetPasswordCredentials) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,11 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const verifyEmail = async (otp: string) => {
+  const verifyEmail = async (credentials: VerifyEmailCredentials) => {
     try {
       setIsLoading(true);
       setError(null);
-      await authService.verifyEmail(otp);
+      await authService.verifyEmail(credentials);
       router.push('/auth/login');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
@@ -71,11 +73,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const resendOtp = async () => {
+  const resendOtp = async (email: string) => {
     try {
       setIsLoading(true);
       setError(null);
-      await authService.resendOtp();
+      await authService.resendOtp(email);
       setError('OTP has been sent to your email');
       setAlertType('success');
     } catch (error) {
@@ -92,6 +94,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/auth/login');
   };
 
+  const forgotPassword = async (credentials: ForgotPasswordCredentials) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await authService.forgotPassword(credentials);
+      setError('Password reset link has been sent to your email');
+      setAlertType('success');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An error occurred');
+      setAlertType('error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetPassword = async (credentials: ResetPasswordCredentials) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await authService.resetPassword(credentials);
+      setError('Password has been updated successfully');
+      setAlertType('success');
+      setTimeout(() => {
+        router.push('/auth/login');
+      }, 2000);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An error occurred');
+      setAlertType('error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -106,6 +141,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resendOtp,
         setError,
         setAlertType,
+        forgotPassword,
+        resetPassword,
       }}
     >
       {children}

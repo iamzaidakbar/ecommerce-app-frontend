@@ -1,20 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert } from "@/components/ui/Alert";
+import { useRouter } from 'next/navigation';
 
 const VerifyEmailPage = () => {
   const { verifyEmail, resendOtp, isLoading, error, setError, alertType } = useAuth();
   const [otp, setOtp] = useState("");
+  const email = sessionStorage.getItem('verificationEmail');
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!email) {
+      router.push('/auth/register');
+    }
+  }, [email, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await verifyEmail(otp);
+      await verifyEmail({ otp, email: email! });
     } catch (error) {
       console.error("Verification failed:", error);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (email) {
+      await resendOtp(email);
     }
   };
 
@@ -73,7 +88,7 @@ const VerifyEmailPage = () => {
 
             <button
               type="button"
-              onClick={resendOtp}
+              onClick={handleResendOtp}
               disabled={isLoading}
               className="w-full text-sm text-gray-400 hover:text-white transition-colors"
             >

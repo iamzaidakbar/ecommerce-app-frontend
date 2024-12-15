@@ -17,5 +17,20 @@ export interface AuthResponse {
     email: string;
     firstName: string;
     lastName: string;
+    isVerified: boolean;
   };
+}
+
+export interface VerifyEmailCredentials {
+  otp: string;
+  email: string;
+}
+
+export interface ForgotPasswordCredentials {
+  email: string;
+}
+
+export interface ResetPasswordCredentials {
+  token: string;
+  password: string;
 } 
