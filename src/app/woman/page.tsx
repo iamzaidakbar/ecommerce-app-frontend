@@ -25,7 +25,7 @@ const womenCategories = [
 ];
 
 export default function WomanPage() {
-  const [layout, setLayout] = useState<GridLayout>("3x3");
+  const [layout, setLayout] = useState<GridLayout>("5x5");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [sortBy, setSortBy] = useState("newest");

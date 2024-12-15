@@ -828,5 +828,14 @@ export const mockService = {
       });
       return true; // favorited
     }
+  },
+
+  updateCartItemQuantity: async (cartItemId: string, quantity: number) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const item = mockData.cart.find(item => item.id === cartItemId);
+    if (item) {
+      item.quantity = quantity;
+    }
+    return item;
   }
 }; 

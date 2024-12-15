@@ -2,19 +2,13 @@
 
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { WeatherType } from '@/services/weather.service';
-import { videoService } from '@/services/video.service';
 
-interface WeatherVideoProps {
-  type: WeatherType;
-}
-
-export const WeatherVideo = ({ type }: WeatherVideoProps) => {
+export const VideoBackground = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.playbackRate = 0.75; // Slow down playback slightly
+      videoRef.current.playbackRate = 0.75;
       videoRef.current.play();
     }
   }, []);
@@ -33,10 +27,10 @@ export const WeatherVideo = ({ type }: WeatherVideoProps) => {
         playsInline
         className="object-cover w-full h-full"
       >
-        <source src={videoService.getWeatherVideo(type).webm} type="video/webm" />
-        <source src={videoService.getWeatherVideo(type).mp4} type="video/mp4" />
+        <source src="/videos/campaign_add.mp4" type="video/mp4" />
+        <source src="/videos/campaign_add.webm" type="video/webm" />
       </video>
-      <div className="absolute inset-0 bg-black/20" /> {/* Optional overlay */}
+      <div className="absolute inset-0 bg-black/20" />
     </motion.div>
   );
 }; 
