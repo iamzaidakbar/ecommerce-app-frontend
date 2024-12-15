@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, Settings, Package, LogOut } from "lucide-react";
+import { User, Settings, Package, LogOut, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -19,13 +19,32 @@ interface Order {
     total: number;
   }
 
-const TABS = [
+interface UserData {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  isEmailVerified: boolean;
+  role: string;
+  createdAt: string;
+}
+
+const ADMIN_TABS = [
+  { id: "profile", label: "MY PROFILE", icon: User },
+  { id: "orders", label: "MY ORDERS", icon: Package },
+  { id: "settings", label: "SETTINGS", icon: Settings },
+  { id: "users", label: "MANAGE USERS", icon: Users },
+] as const;
+
+const USER_TABS = [
   { id: "profile", label: "MY PROFILE", icon: User },
   { id: "orders", label: "MY ORDERS", icon: Package },
   { id: "settings", label: "SETTINGS", icon: Settings },
 ] as const;
 
-type Tab = (typeof TABS)[number]["id"];
+type AdminTab = (typeof ADMIN_TABS)[number]["id"];
+type UserTab = (typeof USER_TABS)[number]["id"];
+type Tab = AdminTab | UserTab;
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>("profile");
@@ -42,7 +61,6 @@ export default function ProfilePage() {
     queryKey: ['user'],
     queryFn: async () => {
       const response = await axiosInstance.get('/users/profile');
-      console.log(response, 'response');
       return response.data.data.user;
     },
   });
@@ -154,6 +172,23 @@ export default function ProfilePage() {
     }
   };
 
+  const { data: allUsers, isLoading: usersLoading } = useQuery({
+    queryKey: ['all-users'],
+    queryFn: async () => {
+      // Only fetch if user is admin
+      if (data?.role === 'admin') {
+        const response = await axiosInstance.get('/users');
+        return response.data.data.users;
+      }
+      return null;
+    },
+    enabled: data?.role === 'admin', // Only run query if user is admin
+  });
+
+  const tabs = data?.role === 'admin' ? ADMIN_TABS : USER_TABS;
+
+  console.log(allUsers, 'allUsers');
+
   return (
     <div className="min-h-screen pt-40 px-8">
       <div className="max-w-3xl mx-auto">
@@ -212,10 +247,10 @@ export default function ProfilePage() {
         )}
 
         {/* Tabs */}
-        <div className="grid grid-cols-3 gap-1 mb-12">
-          {TABS.map(({ id, label, icon: Icon }) => (
+        <div className={`grid ${data?.role === 'admin' ? 'grid-cols-4' : 'grid-cols-3'} gap-1 mb-12`}>
+          {tabs.map(({ id, label, icon: Icon }) => (
             <button
-              key={id}
+              key={`tab-${id}`}
               onClick={() => setActiveTab(id)}
               className={`py-4 text-[11px] tracking-wider flex items-center justify-center space-x-2 transition-colors
                 ${
@@ -421,10 +456,76 @@ export default function ProfilePage() {
 
               <div>
                 <div className="text-[11px] mb-2">ACCOUNT SETTINGS</div>
-                <button className="w-full text-left py-4 border-t flex items-center justify-between text-[11px] hover:bg-black/5">
+                <div key="delete-account" className="w-full text-left py-4 border-t flex items-center justify-between text-[11px] hover:bg-black/5">
                   <span>DELETE ACCOUNT</span>
-                </button>
+                </div>
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === "users" && data?.role === "admin" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-6 max-w-[800px]"
+            >
+              <div className="text-[11px] mb-4">MANAGE USERS</div>
+              {!usersLoading && allUsers ? (
+                <div className="space-y-4">
+                  {allUsers.map((user: UserData) => (
+                    <div key={`user-${user?._id}`} className="border p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="text-[11px] font-medium">
+                          {user.firstName} {user.lastName}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {user.isEmailVerified ? (
+                            <div className="flex items-center space-x-1 text-[11px] text-green-600">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                              <span>Verified</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-1 text-[11px] text-yellow-600">
+                              <span className="w-1.5 h-1.5 rounded-full bg-yellow-600" />
+                              <span>Not Verified</span>
+                            </div>
+                          )}
+                          <div className="text-[11px] bg-gray-100 px-2 py-1 rounded">
+                            {user.role}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-gray-500">{user.email}</div>
+                      <div className="text-[11px] text-gray-400">
+                        Joined: {new Date(user.createdAt).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center space-x-2 pt-2">
+                        <Button
+                          variant="secondary"
+                          className="text-[11px]"
+                          onClick={() => {/* TODO: Implement edit user */}}
+                        >
+                          EDIT USER
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          className="text-[11px]"
+                          onClick={() => {/* TODO: Implement delete user */}}
+                        >
+                          DELETE USER
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <div className="text-[11px] text-gray-500">
+                    No users found
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </div>
