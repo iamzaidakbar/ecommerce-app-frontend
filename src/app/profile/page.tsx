@@ -467,13 +467,13 @@ export default function ProfilePage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="space-y-6 max-w-[800px]"
+              className="space-y-6"
             >
               <div className="text-[11px] mb-4">MANAGE USERS</div>
               {!usersLoading && allUsers ? (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-w-[800px]">
                   {allUsers.map((user: UserData) => (
-                    <div key={`user-${user?._id}`} className="border p-4 space-y-2">
+                    <div key={`user-${user?._id}`} className="border p-4 space-y-2 bg-white hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between">
                         <div className="text-[11px] font-medium">
                           {user.firstName} {user.lastName}
@@ -490,10 +490,10 @@ export default function ProfilePage() {
                               <span>Not Verified</span>
                             </div>
                           )}
-                          <div className="text-[11px] bg-gray-100 px-2 py-1 rounded">
-                            {user.role}
-                          </div>
                         </div>
+                      </div>
+                      <div className="text-[11px] bg-gray-100 w-fit px-2 py-1 rounded">
+                        {user.role}
                       </div>
                       <div className="text-[11px] text-gray-500">{user.email}</div>
                       <div className="text-[11px] text-gray-400">
@@ -502,17 +502,17 @@ export default function ProfilePage() {
                       <div className="flex items-center space-x-2 pt-2">
                         <Button
                           variant="secondary"
-                          className="text-[11px]"
+                          className="text-[11px] flex-1"
                           onClick={() => {/* TODO: Implement edit user */}}
                         >
-                          EDIT USER
+                          EDIT
                         </Button>
                         <Button
                           variant="secondary"
-                          className="text-[11px]"
+                          className="text-[11px] flex-1"
                           onClick={() => {/* TODO: Implement delete user */}}
                         >
-                          DELETE USER
+                          DELETE
                         </Button>
                       </div>
                     </div>
@@ -522,7 +522,7 @@ export default function ProfilePage() {
                 <div className="text-center py-12">
                   <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                   <div className="text-[11px] text-gray-500">
-                    No users found
+                    {usersLoading ? 'Loading users...' : 'No users found'}
                   </div>
                 </div>
               )}
