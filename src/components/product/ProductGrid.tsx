@@ -66,7 +66,7 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
           </div>
           <div className="mt-4 space-y-1">
             <h3 className="text-sm font-light">{product.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500">
               ${product.price.toFixed(2)}
             </p>
           </div>

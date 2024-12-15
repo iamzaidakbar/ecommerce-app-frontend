@@ -42,7 +42,7 @@ export default function ViewAllPage() {
   });
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#111111] pt-20">
+    <div className="min-h-screen bg-white pt-20">
       <PageHeader
         title="VIEW ALL"
         showLayoutSwitcher

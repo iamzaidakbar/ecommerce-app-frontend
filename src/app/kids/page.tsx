@@ -62,7 +62,7 @@ export default function KidsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#111111] pt-20">
+    <div className="min-h-screen bg-white pt-20">
       <PageHeader
         title="KIDS"
         showLayoutSwitcher

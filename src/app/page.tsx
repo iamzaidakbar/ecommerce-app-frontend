@@ -82,9 +82,9 @@ export default function HomePage() {
         </section>
 
         {/* Collections */}
-        <section className="py-20 px-8 bg-white dark:bg-[#111111]">
+        <section className="py-20 px-8 bg-white">
           <div className="max-w-8xl mx-auto">
-            <h2 className="text-3xl font-light tracking-wider mb-12">COLLECTIONS</h2>
+            <h2 className="text-3xl font-light tracking-wider mb-12 text-black">COLLECTIONS</h2>
             <div className="grid grid-cols-3 gap-8">
               {collections.map((collection) => (
                 <Link
@@ -126,7 +126,7 @@ export default function HomePage() {
         {/* New Arrivals */}
         <section className="py-20 px-8">
           <div className="max-w-8xl mx-auto">
-            <h2 className="text-3xl font-light tracking-wider mb-12">NEW ARRIVALS</h2>
+            <h2 className="text-3xl font-light tracking-wider mb-12 text-black">NEW ARRIVALS</h2>
             <div className="grid grid-cols-4 gap-8">
               {newArrivals?.map((product) => (
                 <Link

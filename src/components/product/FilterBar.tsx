@@ -41,8 +41,8 @@ export function FilterBar({
             onClick={() => onCategoryChange(category === 'all' ? null : category)}
             className={`text-xs font-light tracking-widest transition-colors ${
               (category === 'all' && !selectedCategory) || category === selectedCategory
-                ? "text-black dark:text-white"
-                : "text-gray-500 hover:text-black dark:hover:text-white"
+                ? "text-black"
+                : "text-gray-500 hover:text-black"
             }`}
           >
             {category.toUpperCase()}
@@ -51,7 +51,7 @@ export function FilterBar({
       </div>
 
       {/* Filters row */}
-      <div className="flex items-center justify-between border-t border-b border-gray-200 dark:border-gray-800 py-4">
+      <div className="flex items-center justify-between border-t border-b border-gray-200 py-4">
         {/* Price Range */}
         <div className="flex items-center space-x-6">
           <span className="text-xs font-light tracking-wider">PRICE RANGE</span>
@@ -77,15 +77,15 @@ export function FilterBar({
             <span>SORT BY: {sortOptions.find(opt => opt.value === sortBy)?.label}</span>
             <ChevronDown className="w-3.5 h-3.5" />
           </button>
-          <div className="absolute right-0 top-full mt-2 w-48 py-1 bg-white dark:bg-[#111111] border border-gray-200 dark:border-gray-800 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+          <div className="absolute right-0 top-full mt-2 w-48 py-1 bg-white border border-gray-200 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
             {sortOptions.map(option => (
               <button
                 key={option.value}
                 onClick={() => onSortChange(option.value)}
                 className={`w-full text-left px-4 py-2 text-xs font-light tracking-wider transition-colors ${
                   sortBy === option.value
-                    ? "text-black dark:text-white"
-                    : "text-gray-500 hover:text-black dark:hover:text-white"
+                    ? "text-black"
+                    : "text-gray-500 hover:text-black"
                 }`}
               >
                 {option.label}
