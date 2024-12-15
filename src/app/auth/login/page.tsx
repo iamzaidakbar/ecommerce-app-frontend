@@ -41,7 +41,7 @@ const LoginPage = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-black text-white flex items-center justify-center px-4"
+      className="min-h-screen flex items-center justify-center px-4"
     >
       <div className="w-full max-w-md">
         <h1 className="text-4xl font-light mb-12 tracking-tight">LOGIN</h1>

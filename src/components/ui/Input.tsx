@@ -13,11 +13,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           className={cn(
             "w-full bg-transparent border-b text-sm py-2.5 focus:outline-none transition-colors disabled:opacity-50",
-            "autofill:bg-transparent",
-            "[-webkit-autofill:active]:bg-transparent [-webkit-autofill:hover]:bg-transparent [-webkit-autofill:focus]:bg-transparent [-webkit-autofill]:bg-transparent",
-            "[-webkit-autofill]:text-white [-webkit-autofill:focus]:text-white [-webkit-autofill:active]:text-white [-webkit-autofill:hover]:text-white",
-            "[-webkit-autofill]:shadow-[0_0_0_30px_rgb(0,0,0)_inset]",
-            error ? 'border-red-500' : 'border-gray-600 focus:border-white',
+            "text-black dark:text-white",
+            error 
+              ? 'border-red-500' 
+              : 'border-gray-300 dark:border-gray-500 focus:border-black dark:focus:border-white',
             className
           )}
           {...props}
