@@ -2,13 +2,6 @@ import { motion } from "framer-motion";
 import { Slider } from "@/components/ui/Slider";
 import { ChevronDown } from "lucide-react";
 
-const categories = [
-  "all",
-  "clothing",
-  "accessories",
-  "shoes",
-  "outerwear"
-];
 const sortOptions = [
   { value: "newest", label: "NEWEST" },
   { value: "price-asc", label: "PRICE: LOW TO HIGH" },
@@ -23,7 +16,10 @@ interface FilterBarProps {
   onPriceRangeChange: (range: [number, number]) => void;
   sortBy: string;
   onSortChange: (sort: string) => void;
+  categories?: string[];
 }
+
+const defaultCategories = ["all", "clothing", "accessories", "shoes", "outerwear"];
 
 export function FilterBar({
   selectedCategory,
@@ -32,6 +28,7 @@ export function FilterBar({
   onPriceRangeChange,
   sortBy,
   onSortChange,
+  categories = defaultCategories,
 }: FilterBarProps) {
   return (
     <div className="flex flex-col space-y-8">

@@ -19,6 +19,7 @@ interface PageHeaderProps {
   onPriceRangeChange?: (range: [number, number]) => void;
   sortBy?: string;
   onSortChange?: (sort: string) => void;
+  categories?: string[];
 }
 
 const layoutButtons = [
@@ -40,6 +41,7 @@ export function PageHeader({
   onPriceRangeChange,
   sortBy,
   onSortChange,
+  categories,
 }: PageHeaderProps) {
   return (
     <div className="bg-white dark:bg-[#111111] border-b border-gray-200 dark:border-gray-800">
@@ -77,6 +79,7 @@ export function PageHeader({
               onPriceRangeChange={onPriceRangeChange}
               sortBy={sortBy}
               onSortChange={onSortChange}
+              categories={categories}
             />
           )}
 
