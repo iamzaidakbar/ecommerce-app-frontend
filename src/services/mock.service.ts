@@ -47,6 +47,13 @@ export interface User {
   createdAt: string;
 }
 
+export interface FavoriteItem {
+  id: string;
+  productId: string;
+  product: Product;
+  addedAt: string;
+}
+
 export const mockData = {
   products: await Promise.all([
     {
@@ -714,7 +721,9 @@ export const mockData = {
       isVerified: true,
       createdAt: "2024-01-11T00:00:00Z"
     }
-  ] as User[]
+  ] as User[],
+
+  favorites: [] as FavoriteItem[]
 };
 
 export const mockService = {
@@ -793,5 +802,31 @@ export const mockService = {
     const user = mockData.users[0];
     Object.assign(user, userData);
     return user;
+  },
+
+  getFavorites: async () => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return mockData.favorites;
+  },
+
+  toggleFavorite: async (productId: string) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const index = mockData.favorites.findIndex(f => f.productId === productId);
+    
+    if (index > -1) {
+      mockData.favorites.splice(index, 1);
+      return false; // not favorited
+    } else {
+      const product = mockData.products.find(p => p.id === productId);
+      if (!product) throw new Error('Product not found');
+      
+      mockData.favorites.push({
+        id: `fav_${Date.now()}`,
+        productId,
+        product,
+        addedAt: new Date().toISOString()
+      });
+      return true; // favorited
+    }
   }
 }; 

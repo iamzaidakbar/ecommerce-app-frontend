@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, User, ChevronDown } from "lucide-react";
+import { Search, User, ChevronDown, Heart, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
@@ -63,6 +63,7 @@ export const Navbar = () => {
             />
             <Search className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           </div>
+
 
           {/* Auth Links */}
           {!isAuthenticated ? (
@@ -131,6 +132,18 @@ export const Navbar = () => {
               </AnimatePresence>
             </div>
           )}
+
+          {/* Favorites */}
+          <Link href="/favorites" className="relative group flex items-center space-x-2">
+            <Heart className="w-[18px] h-[18px]" />
+            <p className="text-[12px] font-light">FAVORITES</p>
+          </Link>
+
+          {/* Shopping Bag */}
+          <Link href="/cart" className="relative group flex items-center space-x-2">
+            <ShoppingBag className="w-[18px] h-[18px]" />
+            <p className="text-[12px] font-light">SHOPPING BAG</p>
+          </Link>
         </div>
       </div>
     </motion.nav>
