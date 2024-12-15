@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
 import { Product } from "@/services/mock.service";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ interface ProductGridProps {
 }
 
 export function ProductGrid({ products, layout }: ProductGridProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const gridConfig = {
     "2x2": "grid-cols-2",
@@ -25,10 +27,31 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
     },
   });
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const productCard = target.closest('[data-product-id]');
+    const addToCartButton = target.closest('[data-add-to-cart]');
+
+    if (addToCartButton) {
+      e.preventDefault();
+      e.stopPropagation();
+      const productId = addToCartButton.getAttribute('data-add-to-cart');
+      if (productId) {
+        addToCartMutation.mutate(productId);
+      }
+    } else if (productCard) {
+      const productId = productCard.getAttribute('data-product-id');
+      if (productId) {
+        router.push(`/products/${productId}`);
+      }
+    }
+  };
+
   return (
     <motion.div
       layout
       className={`grid ${gridConfig[layout]} gap-1`}
+      onClick={handleClick}
     >
       {products.map((product) => (
         <motion.div
@@ -38,6 +61,7 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="group cursor-pointer mb-4"
+          data-product-id={product.id}
         >
           <div className="relative aspect-[3/4] overflow-hidden">
             <Image
@@ -54,10 +78,7 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
                 initial={{ opacity: 0 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addToCartMutation.mutate(product.id);
-                }}
+                data-add-to-cart={product.id}
                 className="absolute bottom-4 right-4 p-2 bg-white text-black rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <ShoppingBag className="w-4 h-4" />
