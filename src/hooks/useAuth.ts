@@ -41,11 +41,11 @@ export const useAuth_ = () => {
     router.push('/auth/login');
   };
 
-  const verifyEmail = async (otp: string) => {
+  const verifyEmail = async (otp: string, email: string) => {
     try {
       setIsLoading(true);
       setError(null);
-      await authService.verifyEmail(otp);
+      await authService.verifyEmail({ otp, email });
       router.push('/auth/login');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
@@ -54,11 +54,11 @@ export const useAuth_ = () => {
     }
   };
 
-  const resendOtp = async () => {
+  const resendOtp = async (email: string) => {
     try {
       setIsLoading(true);
       setError(null);
-      await authService.resendOtp();
+      await authService.resendOtp(email);
       setError('OTP has been sent to your email');
       setAlertType('success');
     } catch (error) {

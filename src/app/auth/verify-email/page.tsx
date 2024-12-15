@@ -2,28 +2,36 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert } from "@/components/ui/Alert";
-import { useRouter } from 'next/navigation';
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 const VerifyEmailPage = () => {
+  const router = useRouter();
   const { verifyEmail, resendOtp, isLoading, error, setError, alertType } = useAuth();
   const [otp, setOtp] = useState("");
-  const email = sessionStorage.getItem('verificationEmail');
-  const router = useRouter();
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!email) {
+    // Check sessionStorage only after component mounts
+    const storedEmail = sessionStorage.getItem('verificationEmail');
+    setEmail(storedEmail);
+    
+    if (!storedEmail) {
       router.push('/auth/register');
     }
-  }, [email, router]);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await verifyEmail({ otp, email: email! });
-    } catch (error) {
-      console.error("Verification failed:", error);
+    if (email) {
+      try {
+        await verifyEmail({ otp, email });
+      } catch (error) {
+        console.error("Verification failed:", error);
+      }
     }
   };
 
@@ -33,68 +41,51 @@ const VerifyEmailPage = () => {
     }
   };
 
+  if (!email) return null; // Don't render anything until email is loaded
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
       className="min-h-screen bg-black text-white flex items-center justify-center px-4"
     >
       <div className="w-full max-w-md">
-        <motion.h1
-          initial={{ y: -20 }}
-          animate={{ y: 0 }}
-          className="text-4xl font-light mb-12 tracking-tight"
-        >
-          VERIFY EMAIL
-        </motion.h1>
+        <h1 className="text-4xl font-light mb-12 tracking-tight">VERIFY EMAIL</h1>
 
-        <Alert 
-          message={error} 
-          onClose={() => setError(null)}
-          type={alertType}
-        />
+        <Alert message={error} onClose={() => setError(null)} type={alertType} />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <motion.div
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <input
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="space-y-6">
+            <Input
               type="text"
               placeholder="ENTER OTP"
               disabled={isLoading}
-              className="w-full bg-transparent border-b border-gray-600 py-3 focus:outline-none focus:border-white transition-colors disabled:opacity-50"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               maxLength={6}
             />
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="space-y-4"
-          >
-            <button
+          <div className="space-y-6">
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-white text-black py-3 font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              isLoading={isLoading}
+              loadingText="VERIFYING..."
             >
-              {isLoading ? "VERIFYING..." : "VERIFY EMAIL"}
-            </button>
+              VERIFY EMAIL
+            </Button>
 
-            <button
-              type="button"
-              onClick={handleResendOtp}
-              disabled={isLoading}
-              className="w-full text-sm text-gray-400 hover:text-white transition-colors"
-            >
-              RESEND OTP
-            </button>
-          </motion.div>
+            <div className="flex justify-start">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleResendOtp}
+                disabled={isLoading}
+              >
+                RESEND OTP
+              </Button>
+            </div>
+          </div>
         </form>
       </div>
     </motion.div>

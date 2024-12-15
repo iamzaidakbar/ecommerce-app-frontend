@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { forgotPasswordSchema } from '@/lib/validations/auth';
 import { useFormValidation } from '@/hooks/useFormValidation';
 
@@ -43,39 +45,36 @@ const ForgotPasswordPage = () => {
 
         <Alert message={error} onClose={() => setError(null)} type={alertType} />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <input
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="space-y-6">
+            <Input
               type="email"
               name="email"
               placeholder="EMAIL"
               disabled={isLoading}
-              className={`w-full bg-transparent border-b ${
-                errors.email ? 'border-red-500' : 'border-gray-600'
-              } py-3 focus:outline-none focus:border-white transition-colors`}
               value={email}
               onChange={handleChange}
+              error={errors.email}
             />
-            {errors.email && (
-              <p className="mt-1 text-xs text-red-500">{errors.email}</p>
-            )}
           </div>
 
-          <div className="space-y-4">
-            <button
+          <div className="space-y-6">
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-white text-black py-3 font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
+              isLoading={isLoading}
+              loadingText="SENDING..."
             >
-              {isLoading ? "SENDING..." : "SEND RESET LINK"}
-            </button>
+              SEND RESET LINK
+            </Button>
 
-            <Link
-              href="/auth/login"
-              className="block text-center text-sm text-gray-400 hover:text-white transition-colors"
-            >
-              BACK TO LOGIN
-            </Link>
+            <div className="flex justify-start">
+              <Link 
+                href="/auth/login"
+                className="text-xs tracking-wide text-gray-400 hover:text-white transition-colors"
+              >
+                BACK TO LOGIN
+              </Link>
+            </div>
           </div>
         </form>
       </div>
