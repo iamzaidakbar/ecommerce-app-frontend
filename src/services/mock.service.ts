@@ -168,6 +168,86 @@ export const mockData = {
       imageUrl: await imageService.getCategoryImage('jacket'),
       stock: 30,
       createdAt: "2024-01-15T21:00:00Z"
+    },
+    {
+      id: "13",
+      name: "Leather Wallet",
+      price: 45.99,
+      description: "Genuine leather bifold wallet",
+      category: "accessories",
+      imageUrl: await imageService.getCategoryImage('wallet'),
+      stock: 80,
+      createdAt: "2024-01-15T22:00:00Z"
+    },
+    {
+      id: "14",
+      name: "Dress Shoes",
+      price: 149.99,
+      description: "Oxford dress shoes in black leather",
+      category: "shoes",
+      imageUrl: await imageService.getCategoryImage('dress-shoes'),
+      stock: 25,
+      createdAt: "2024-01-15T23:00:00Z"
+    },
+    {
+      id: "15",
+      name: "Wool Sweater",
+      price: 89.99,
+      description: "Cozy merino wool sweater in charcoal gray",
+      category: "knitwear",
+      imageUrl: await imageService.getCategoryImage('sweater'),
+      stock: 35,
+      createdAt: "2024-01-16T00:00:00Z"
+    },
+    {
+      id: "16", 
+      name: "Canvas Backpack",
+      price: 69.99,
+      description: "Durable canvas backpack with leather trim",
+      category: "accessories",
+      imageUrl: await imageService.getCategoryImage('backpack'),
+      stock: 45,
+      createdAt: "2024-01-16T01:00:00Z"
+    },
+    {
+      id: "17",
+      name: "Linen Shirt",
+      price: 79.99,
+      description: "Breathable linen shirt in light blue",
+      category: "shirts",
+      imageUrl: await imageService.getCategoryImage('shirt'),
+      stock: 50,
+      createdAt: "2024-01-16T02:00:00Z"
+    },
+    {
+      id: "18",
+      name: "Leather Belt",
+      price: 39.99,
+      description: "Classic leather belt with silver buckle",
+      category: "accessories",
+      imageUrl: await imageService.getCategoryImage('belt'),
+      stock: 60,
+      createdAt: "2024-01-16T03:00:00Z"
+    },
+    {
+      id: "19",
+      name: "Wool Coat",
+      price: 249.99,
+      description: "Elegant wool coat in camel color",
+      category: "outerwear",
+      imageUrl: await imageService.getCategoryImage('coat'),
+      stock: 20,
+      createdAt: "2024-01-16T04:00:00Z"
+    },
+    {
+      id: "20",
+      name: "Cotton Socks",
+      price: 12.99,
+      description: "Pack of 3 premium cotton socks",
+      category: "accessories",
+      imageUrl: await imageService.getCategoryImage('socks'),
+      stock: 100,
+      createdAt: "2024-01-16T05:00:00Z"
     }
   ]) as Product[],
 

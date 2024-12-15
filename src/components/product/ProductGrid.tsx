@@ -26,8 +26,7 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          whileHover={{ y: -5 }}
-          className="group cursor-pointer"
+          className="group cursor-pointer mb-4"
         >
           <div className="relative aspect-[3/4] overflow-hidden">
             <Image

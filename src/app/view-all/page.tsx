@@ -14,6 +14,7 @@ export default function ViewAllPage() {
   const [layout, setLayout] = useState<GridLayout>("3x3");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [sortBy, setSortBy] = useState("newest");
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
@@ -27,6 +28,19 @@ export default function ViewAllPage() {
     return true;
   });
 
+  const sortedAndFilteredProducts = filteredProducts?.sort((a, b) => {
+    switch (sortBy) {
+      case "price-asc":
+        return a.price - b.price;
+      case "price-desc":
+        return b.price - a.price;
+      case "name-asc":
+        return a.name.localeCompare(b.name);
+      default:
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+  });
+
   const layoutButtons = [
     { layout: "2x2" as GridLayout, icon: Grid2X2 },
     { layout: "3x3" as GridLayout, icon: Grid3X3 },
@@ -34,27 +48,30 @@ export default function ViewAllPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#111111]">
+    <div className="min-h-screen bg-white dark:bg-[#111111] pt-20">
       {/* Header with filters and layout options */}
-      <div className="sticky top-16 z-40 bg-white/80 dark:bg-[#111111]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-          <div className="flex items-center justify-between">
-            {/* Layout switcher */}
-            <div className="flex items-center space-x-2">
-              {layoutButtons.map(({ layout: l, icon: Icon }) => (
-                <motion.button
-                  key={l}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setLayout(l)}
-                  className={`p-2 rounded-md transition-colors ${
-                    layout === l
-                      ? "bg-black dark:bg-white text-white dark:text-black"
-                      : "text-gray-500 hover:text-black dark:hover:text-white"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                </motion.button>
-              ))}
+      <div className="bg-white dark:bg-[#111111] border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-8xl mx-auto px-8 py-8">
+          <div className="flex flex-col space-y-8">
+            {/* Title and Layout switcher */}
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-extralight tracking-wide">VIEW ALL</h1>
+              <div className="flex items-center space-x-2">
+                {layoutButtons.map(({ layout: l, icon: Icon }) => (
+                  <motion.button
+                    key={l}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setLayout(l)}
+                    className={`p-2 rounded-md transition-colors ${
+                      layout === l
+                        ? "bg-black dark:bg-white text-white dark:text-black"
+                        : "text-gray-500 hover:text-black dark:hover:text-white"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </motion.button>
+                ))}
+              </div>
             </div>
 
             {/* Filters */}
@@ -63,18 +80,25 @@ export default function ViewAllPage() {
               onCategoryChange={setSelectedCategory}
               priceRange={priceRange}
               onPriceRangeChange={setPriceRange}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
             />
+
+            {/* Results count */}
+            <div className="text-sm font-light">
+              {sortedAndFilteredProducts?.length || 0} ITEMS
+            </div>
           </div>
         </div>
       </div>
 
       {/* Products grid */}
-      <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-8xl mx-auto px-8 py-8">
         <AnimatePresence mode="wait">
           {isLoading ? (
             <ProductSkeleton layout={layout} />
           ) : (
-            <ProductGrid products={filteredProducts || []} layout={layout} />
+            <ProductGrid products={sortedAndFilteredProducts || []} layout={layout} />
           )}
         </AnimatePresence>
       </main>

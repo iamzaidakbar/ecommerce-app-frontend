@@ -20,14 +20,15 @@ export function Slider({ value, onValueChange, min, max, step }: SliderProps) {
       max={max}
       min={min}
       step={step}
+      minStepsBetweenThumbs={1}
     >
-      <SliderPrimitive.Track className="relative h-[2px] w-full grow bg-gray-200 dark:bg-gray-800">
-        <SliderPrimitive.Range className="absolute h-full bg-black dark:bg-white" />
+      <SliderPrimitive.Track className="relative h-[1px] w-full bg-gray-200 dark:bg-gray-800">
+        <SliderPrimitive.Range className="absolute h-[1px] bg-black dark:bg-white" />
       </SliderPrimitive.Track>
       {value.map((_, index) => (
         <SliderPrimitive.Thumb
           key={index}
-          className="block h-4 w-4 rounded-full border border-gray-300 bg-white dark:border-gray-700 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+          className="block h-3 w-3 rounded-full border border-black dark:border-white bg-white dark:bg-black focus:outline-none focus-visible:ring-1 focus-visible:ring-black dark:focus-visible:ring-white"
         />
       ))}
     </SliderPrimitive.Root>
