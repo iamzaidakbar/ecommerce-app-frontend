@@ -7,9 +7,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { mockService } from "@/services/mock.service";
 import { Button } from "@/components/ui/Button";
+import { ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data: cartItems, isLoading } = useQuery({
     queryKey: ['cart'],
@@ -29,6 +32,11 @@ export default function CartPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
+  });
+
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: mockService.getCurrentUser,
   });
 
   const totalAmount = cartItems?.reduce(
@@ -130,7 +138,23 @@ export default function CartPage() {
               <span>${totalAmount.toFixed(2)}</span>
             </div>
 
-            <Button>PROCEED TO CHECKOUT</Button>
+            <Button
+              onClick={() => router.push('/checkout')}
+              disabled={!user?.isVerified}
+              className="text-[11px] tracking-wider py-3"
+            >
+              {!user?.isVerified ? (
+                <span className="flex items-center space-x-2">
+                  <span>VERIFY EMAIL TO CHECKOUT</span>
+                  <ArrowRight className="w-3 h-3" />
+                </span>
+              ) : (
+                <span className="flex items-center space-x-2">
+                  <span>PROCEED TO CHECKOUT</span>
+                  <ArrowRight className="w-3 h-3" />
+                </span>
+              )}
+            </Button>
           </div>
         </div>
       </div>

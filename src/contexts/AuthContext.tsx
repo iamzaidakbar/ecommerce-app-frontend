@@ -25,7 +25,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Check if user is logged in on mount
+    if (typeof window !== 'undefined') {
+      return !!localStorage.getItem('token');
+    }
+    return false;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [alertType, setAlertType] = useState<'error' | 'success'>('error');
@@ -34,9 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      await authService.login(credentials);
-      setIsAuthenticated(true);
-      router.push('/');
+      const response = await authService.login(credentials);
+      console.log(response, 'response1');
+      if (response && response.token) {
+        setIsAuthenticated(true);
+        console.log(response, 'response2');
+        router.push('/');
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
       setAlertType('error');

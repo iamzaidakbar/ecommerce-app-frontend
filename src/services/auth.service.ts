@@ -11,15 +11,26 @@ import {
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const { data } = await axiosInstance.post('/auth/login', credentials);
-      if (!data.user.isVerified) {
-        throw new Error('Please verify your email first');
+      const response = await axiosInstance.post('/auth/login', credentials);
+      // Check if response has the expected structure
+      if (response.data && response.data.data) {
+        const { data } = response.data;  // Nested data structure from API
+        // Store token and user
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Store email for verification if needed
+        if (data.user && !data.user.isEmailVerified) {
+          sessionStorage.setItem('verificationEmail', credentials.email);
+        }
+        return response.data;
+      } else {
+        throw new Error('Invalid response structure');
       }
-      localStorage.setItem('token', data.token);
-      return data;
-    } catch (error) {
-      console.log('Login failed:', error);
-      throw error;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }, message?: string };
+      console.error('Login error:', err.response?.data || err.message);
+      throw new Error(err.response?.data?.message || 'Login failed');
     }
   },
 
