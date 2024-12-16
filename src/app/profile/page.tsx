@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, Settings, Package, LogOut, Users } from "lucide-react";
+import { User, Settings, Package, LogOut, Users, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -29,11 +29,38 @@ interface UserData {
   createdAt: string;
 }
 
+interface ProductFormData {
+  name: string;
+  description: string;
+  price: string;
+  category: string;
+  stock: string;
+  imageUrl: string;
+  images: FileList | null;
+}
+
+interface ApiError {
+  type: string;
+  msg: string;
+  path: keyof ProductFormData;
+  location: string;
+}
+
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      errors?: ApiError[];
+    };
+  };
+  message?: string;
+}
+
 const ADMIN_TABS = [
   { id: "profile", label: "MY PROFILE", icon: User },
   { id: "orders", label: "MY ORDERS", icon: Package },
   { id: "settings", label: "SETTINGS", icon: Settings },
   { id: "users", label: "MANAGE USERS", icon: Users },
+  { id: "products", label: "PRODUCTS", icon: ShoppingBag },
 ] as const;
 
 const USER_TABS = [
@@ -45,6 +72,10 @@ const USER_TABS = [
 type AdminTab = (typeof ADMIN_TABS)[number]["id"];
 type UserTab = (typeof USER_TABS)[number]["id"];
 type Tab = AdminTab | UserTab;
+
+type ProductFormErrors = {
+  [K in keyof ProductFormData]?: string;
+};
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>("profile");
@@ -185,15 +216,98 @@ export default function ProfilePage() {
     enabled: data?.role === 'admin', // Only run query if user is admin
   });
 
+  const [productForm, setProductForm] = useState<ProductFormData>({
+    name: "",
+    description: "",
+    price: "",
+    category: "",
+    stock: "",
+    imageUrl: "",
+    images: null
+  });
+
+  const [productErrors, setProductErrors] = useState<ProductFormErrors>({});
+
+  const validateProductForm = (data: ProductFormData) => {
+    const errors: ProductFormErrors = {};
+    
+    // Validate required fields
+    if (!data.name.trim()) errors.name = "Product name is required";
+    if (!data.description.trim()) errors.description = "Product description is required";
+    if (!data.category.trim()) errors.category = "Category is required";
+    
+    // Validate price
+    const price = parseFloat(data.price);
+    if (isNaN(price) || price <= 0) errors.price = "Price must be a positive number";
+    
+    // Validate stock
+    const stock = parseInt(data.stock);
+    if (isNaN(stock) || stock <= 0) errors.stock = "Stock must be a positive integer";
+    
+    setProductErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const createProductMutation = useMutation({
+    mutationFn: async (data: ProductFormData) => {
+      // Create request body directly as an object
+      const requestBody = {
+        name: data.name.trim(),
+        description: data.description.trim(),
+        price: parseFloat(data.price),
+        category: data.category.trim(),
+        stock: parseInt(data.stock),
+        imageUrl: data.imageUrl?.trim() || "",
+        images: data.images
+      };
+
+      const response = await axiosInstance.post('/products', requestBody);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setProductForm({
+        name: "",
+        description: "",
+        price: "",
+        category: "",
+        stock: "",
+        imageUrl: "",
+        images: null
+      });
+      setProductErrors({});
+    },
+  });
+
+  const handleProductSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (validateProductForm(productForm)) {
+      try {
+        await createProductMutation.mutateAsync(productForm);
+      } catch (error: unknown) {
+        const apiError = error as ApiErrorResponse;
+        if (apiError.response?.data?.errors) {
+          const serverErrors: ProductFormErrors = {};
+          apiError.response.data.errors.forEach((err: ApiError) => {
+            if (err.path) {
+              serverErrors[err.path] = err.msg;
+            }
+          });
+          setProductErrors(serverErrors);
+        }
+      }
+    }
+  };
+
+
   const tabs = data?.role === 'admin' ? ADMIN_TABS : USER_TABS;
 
-  console.log(allUsers, 'allUsers');
-
   return (
-    <div className="min-h-screen pt-40 px-8">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen pt-40 px-4">
+      <div className="max-w-[1200px] mx-auto">
         {/* Header with Verification Status */}
-        <div className="flex items-center justify-between mb-12">
+        <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <h1 className="text-[11px] uppercase tracking-wider">My Account</h1>
             {!isLoading && (
@@ -229,7 +343,7 @@ export default function ProfilePage() {
 
         {/* Not Verified Warning */}
         {!isLoading && !data?.isEmailVerified && (
-          <div className="mb-8 bg-yellow-50 border border-yellow-200 p-4">
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 p-4">
             <div className="text-[11px] text-yellow-800 font-medium mb-1">
               Email Not Verified
             </div>
@@ -247,24 +361,26 @@ export default function ProfilePage() {
         )}
 
         {/* Tabs */}
-        <div className={`grid ${data?.role === 'admin' ? 'grid-cols-4' : 'grid-cols-3'} gap-1 mb-12`}>
+        <div className={`grid ${data?.role === 'admin' ? 'grid-cols-5' : 'grid-cols-3'} gap-0.5 mb-8 bg-gray-100`}>
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={`tab-${id}`}
               onClick={() => setActiveTab(id)}
-              className={`py-4 text-[11px] tracking-wider flex items-center justify-center space-x-2 transition-colors
+              className={`py-3 text-[11px] tracking-wider flex items-center justify-center space-x-1.5 transition-colors
                 ${
-                  activeTab === id ? "bg-black text-white" : "hover:bg-black/5"
+                  activeTab === id 
+                    ? "bg-black text-white" 
+                    : "bg-white hover:bg-black/5"
                 }`}
             >
               <Icon className="w-3 h-3" />
-              <span>{label}</span>
+              <span className="whitespace-nowrap">{label}</span>
             </button>
           ))}
         </div>
 
         {/* Content */}
-        <div className="max-w-[360px]">
+        <div className={`${activeTab === "users" ? "max-w-full" : "max-w-[360px]"}`}>
           {activeTab === "profile" && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -526,6 +642,158 @@ export default function ProfilePage() {
                   </div>
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {activeTab === "products" && data?.role === "admin" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-6"
+            >
+              <div className="text-[11px] mb-4">MANAGE PRODUCTS</div>
+              <form onSubmit={handleProductSubmit} className="space-y-4 max-w-[400px]">
+                <div>
+                  <input
+                    type="text"
+                    name="name"
+                    value={productForm.name}
+                    onChange={(e) => setProductForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Product Name"
+                    className={`w-full border p-3 text-[11px] focus:outline-none ${
+                      productErrors.name ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                    required
+                  />
+                  {productErrors.name && (
+                    <p className="mt-1 text-[10px] text-red-500">{productErrors.name}</p>
+                  )}
+                </div>
+
+                <div>
+                  <textarea
+                    name="description"
+                    value={productForm.description}
+                    onChange={(e) => setProductForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Product Description"
+                    className={`w-full border p-3 text-[11px] focus:outline-none min-h-[100px] ${
+                      productErrors.description ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                    required
+                  />
+                  {productErrors.description && (
+                    <p className="mt-1 text-[10px] text-red-500">{productErrors.description}</p>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    type="number"
+                    name="price"
+                    value={productForm.price}
+                    onChange={(e) => setProductForm(prev => ({ ...prev, price: e.target.value }))}
+                    placeholder="Price"
+                    step="0.01"
+                    min="0"
+                    className={`w-full border p-3 text-[11px] focus:outline-none ${
+                      productErrors.price ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                    required
+                  />
+                  {productErrors.price && (
+                    <p className="mt-1 text-[10px] text-red-500">{productErrors.price}</p>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    type="number"
+                    name="stock"
+                    value={productForm.stock}
+                    onChange={(e) => setProductForm(prev => ({ ...prev, stock: e.target.value }))}
+                    placeholder="Stock Quantity"
+                    min="0"
+                    className={`w-full border p-3 text-[11px] focus:outline-none ${
+                      productErrors.stock ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                    required
+                  />
+                  {productErrors.stock && (
+                    <p className="mt-1 text-[10px] text-red-500">{productErrors.stock}</p>
+                  )}
+                </div>
+
+                <div>
+                  <select
+                    name="category"
+                    value={productForm.category}
+                    onChange={(e) => setProductForm(prev => ({ ...prev, category: e.target.value }))}
+                    className={`w-full border p-3 text-[11px] focus:outline-none ${
+                      productErrors.category ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    <option value="MAN">MAN</option>
+                    <option value="WOMAN">WOMAN</option>
+                    <option value="KID">KIDS</option>
+                  </select>
+                  {productErrors.category && (
+                    <p className="mt-1 text-[10px] text-red-500">{productErrors.category}</p>
+                  )}
+                </div>
+
+                <div>
+                  <div className="text-[11px] mb-2">PRODUCT IMAGES</div>
+                  <div className="space-y-3">
+                    <input
+                      type="url"
+                      name="imageUrl"
+                      value={productForm.imageUrl}
+                      onChange={(e) => setProductForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                      placeholder="Image URL (Optional)"
+                      className="w-full border border-gray-200 p-3 text-[11px] focus:outline-none"
+                    />
+                    <div className="text-center p-3 border border-dashed border-gray-200">
+                      <input
+                        type="file"
+                        name="images"
+                        onChange={(e) => setProductForm(prev => ({ ...prev, images: e.target.files }))}
+                        multiple
+                        accept="image/*"
+                        className="w-full text-[11px] focus:outline-none file:mr-4 file:py-2 file:px-4
+                          file:rounded-full file:border-0 file:text-[11px]
+                          file:bg-black file:text-white
+                          hover:file:bg-black/90"
+                      />
+                      <p className="mt-2 text-[10px] text-gray-500">
+                        Or drag and drop image files here
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="text-[11px] w-full"
+                  isLoading={createProductMutation.isPending}
+                  loadingText="CREATING..."
+                >
+                  CREATE PRODUCT
+                </Button>
+
+                {createProductMutation.isSuccess && (
+                  <p className="text-[11px] text-green-600">
+                    Product created successfully
+                  </p>
+                )}
+
+                {createProductMutation.isError && (
+                  <p className="text-[11px] text-red-600">
+                    Failed to create product
+                  </p>
+                )}
+              </form>
             </motion.div>
           )}
         </div>
