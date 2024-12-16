@@ -1,13 +1,14 @@
 "use client";
 
-import { use } from "react";
-import { useState } from "react";
+import { use, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { axiosInstance } from "@/lib/axios";
+import { useRouter } from "next/navigation";
+import { Product } from "@/types/product";
 
 interface ProductDetailProps {
   params: Promise<{
@@ -19,8 +20,31 @@ export default function ProductDetail({ params }: ProductDetailProps) {
   const { id } = use(params);
   const [quantity, setQuantity] = useState(1);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
-  const { data: product, isLoading } = useQuery({
+
+  // Fetch wishlist to check if product is in it
+  const { data: wishlist, isLoading: wishlistLoading } = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/wishlist');
+      return response.data.data.wishlist.products;
+    },
+  });
+
+   // Fetch cart to check if product is in it
+   const { data: cart, isLoading: cartLoading } = useQuery({
+    queryKey: ['cart'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/cart');
+      return response.data.data.cart.items;
+    },
+  });
+
+  const isInWishlist = wishlist?.some((item: { _id: string }) => item._id === id);
+  const isInCart = cart?.some((item: { product: Product }) => item.product._id === id);
+
+  const { data: product, isLoading: productLoading } = useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
       const response = await axiosInstance.get(`/products/${id}`);
@@ -32,7 +56,7 @@ export default function ProductDetail({ params }: ProductDetailProps) {
     mutationFn: async () => {
       const response = await axiosInstance.post('/cart', {
         productId: id,
-        quantity
+        quantity,
       });
       return response.data;
     },
@@ -41,25 +65,28 @@ export default function ProductDetail({ params }: ProductDetailProps) {
     },
     onError: (error) => {
       console.error('Failed to add to cart:', error);
-    }
+    },
   });
 
-  const addToWishlistMutation = useMutation({
+  const toggleWishlistMutation = useMutation({
     mutationFn: async () => {
-      const response = await axiosInstance.post('/wishlist', {
-        productId: id,
-      });
-      return response.data;
+      if (isInWishlist) {
+        console.log('removing from wishlist', id);
+        return await axiosInstance.delete(`/wishlist/${id}`);
+      } else {
+        console.log('adding to wishlist', id);
+        return await axiosInstance.post('/wishlist', { productId: id });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
     },
     onError: (error) => {
-      console.error('Failed to add to favorites:', error);
-    }
+      console.error('Failed to update wishlist:', error);
+    },
   });
 
-  if (isLoading) {
+  if (productLoading || wishlistLoading || cartLoading) {
     return (
       <div className="min-h-screen pt-40 px-8">
         <div className="max-w-6xl mx-auto animate-pulse">
@@ -117,8 +144,8 @@ export default function ProductDetail({ params }: ProductDetailProps) {
             <div className="max-w-[360px]">
               <div className="flex items-start justify-between mb-4">
                 <h1 className="text-[11px] uppercase tracking-wider">{product.name}</h1>
-                <button onClick={() => addToWishlistMutation.mutate()}>
-                  <Heart className="w-4 h-4" />
+                <button onClick={() => toggleWishlistMutation.mutate()}>
+                  <Heart className={`w-4 h-4 ${isInWishlist ? 'text-red-500 fill-red-500' : 'text-gray-500'}`} />
                 </button>
               </div>
 
@@ -183,12 +210,12 @@ export default function ProductDetail({ params }: ProductDetailProps) {
                 </div>
 
                 <Button
-                  onClick={() => addToCartMutation.mutate()}
+                  onClick={isInCart ? () => router.push('/cart') : () => addToCartMutation.mutate()}
                   isLoading={addToCartMutation.isPending}
                   loadingText="ADDING..."
                   className="text-[11px] tracking-wider py-3 w-full"
                 >
-                  ADD TO BAG
+                  {isInCart ? 'GO TO CART' : 'ADD TO CART'}
                 </Button>
 
                 {addToCartMutation.isSuccess && (
@@ -199,6 +226,7 @@ export default function ProductDetail({ params }: ProductDetailProps) {
                   <p className="text-[11px] text-red-600">Failed to add to cart. Please try again.</p>
                 )}
               </div>
+
 
               {/* Additional Info */}
               <div className="mt-8 space-y-4 text-[11px]">
@@ -221,4 +249,4 @@ export default function ProductDetail({ params }: ProductDetailProps) {
       </div>
     </div>
   );
-} 
+}

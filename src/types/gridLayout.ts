@@ -1,0 +1,1 @@
+export type GridLayout = "2x2" | "3x3" | "5x5";

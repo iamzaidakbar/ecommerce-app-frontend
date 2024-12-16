@@ -7,19 +7,11 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductSkeleton } from "@/components/product/ProductSkeleton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { axiosInstance } from "@/lib/axios";
-import { Product } from "@/types/product";
+import { GridLayout } from "@/types/gridLayout";
+import { MAN_CATEGORIES } from "@/constants";
+import { useSort } from "@/hooks/useSort";
+import { useFilter } from "@/hooks/useFilter";
 
-type GridLayout = "2x2" | "3x3" | "5x5";
-
-const menCategories = [
-  "all",
-  "clothing",
-  "outerwear",
-  "knitwear",
-  "shirts",
-  "shoes",
-  "accessories"
-];
 
 export default function ManPage() {
   const [layout, setLayout] = useState<GridLayout>("5x5");
@@ -49,24 +41,8 @@ export default function ManPage() {
     initialData: [],
   });
 
-  const filteredProducts = data.filter((product: Product) => {
-    if (selectedCategory && selectedCategory !== "all" && product.category !== selectedCategory) return false;
-    if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
-    return true;
-  });
-
-  const sortedProducts = [...filteredProducts].sort((a: Product, b: Product) => {
-    switch (sortBy) {
-      case "price-asc":
-        return a.price - b.price;
-      case "price-desc":
-        return b.price - a.price;
-      case "name-asc":
-        return a.name.localeCompare(b.name);
-      default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }
-  });
+  const { filteredProducts } = useFilter({ products: data, selectedCategory: selectedCategory || "all", priceRange });
+  const { sortedProducts } = useSort({ products: filteredProducts, sortBy });
 
   if (error) {
     return (
@@ -91,7 +67,7 @@ export default function ManPage() {
         sortBy={sortBy}
         onSortChange={setSortBy}
         itemCount={sortedProducts?.length || 0}
-        categories={menCategories}
+        categories={MAN_CATEGORIES}
       />
       
       {/* Products grid */}
