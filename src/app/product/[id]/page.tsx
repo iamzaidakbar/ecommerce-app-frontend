@@ -44,6 +44,21 @@ export default function ProductDetail({ params }: ProductDetailProps) {
     }
   });
 
+  const addToWishlistMutation = useMutation({
+    mutationFn: async () => {
+      const response = await axiosInstance.post('/wishlist', {
+        productId: id,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+    },
+    onError: (error) => {
+      console.error('Failed to add to favorites:', error);
+    }
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen pt-40 px-8">
@@ -102,7 +117,7 @@ export default function ProductDetail({ params }: ProductDetailProps) {
             <div className="max-w-[360px]">
               <div className="flex items-start justify-between mb-4">
                 <h1 className="text-[11px] uppercase tracking-wider">{product.name}</h1>
-                <button>
+                <button onClick={() => addToWishlistMutation.mutate()}>
                   <Heart className="w-4 h-4" />
                 </button>
               </div>
@@ -123,7 +138,7 @@ export default function ProductDetail({ params }: ProductDetailProps) {
               </div>
 
               {/* Size Selection */}
-              <div className="mb-8">
+              {/* <div className="mb-8">
                 <div className="text-[11px] mb-2">BLACK | {product._id}</div>
                 <div className="grid grid-cols-2 gap-1 mb-4">
                   {['S', 'M', 'L', 'XL', 'XXL'].map((size) => (
@@ -138,7 +153,7 @@ export default function ProductDetail({ params }: ProductDetailProps) {
                 <div className="text-[11px] text-gray-600">
                   This product has a smaller fit than usual.
                 </div>
-              </div>
+              </div> */}
 
               {/* Quantity and Add to Cart */}
               <div className="space-y-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import {  useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -17,32 +17,40 @@ interface Collection {
   image: string;
 }
 
-const collections: Collection[] = [
-  {
-    id: "1",
-    title: "MAN",
-    description: "Spring/Summer 2024",
-    link: "/man",
-    image: await imageService.getCategoryImage('man')
-  },
-  {
-    id: "2",
-    title: "WOMAN",
-    description: "Spring/Summer 2024",
-    link: "/woman",
-    image: await imageService.getCategoryImage('woman')
-  },
-  {
-    id: "3",
-    title: "KIDS",
-    description: "Spring/Summer 2024",
-    link: "/kids",
-    image: await imageService.getCategoryImage('kids')
-  }
-];
-
 export default function HomePage() {
   const [activeCollection, setActiveCollection] = useState<string | null>(null);
+  const [collections, setCollections] = useState<Collection[]>([]);
+
+  useEffect(() => {
+    const initCollections = async () => {
+      const collectionsData = [
+        {
+          id: "1",
+          title: "MAN",
+          description: "Spring/Summer 2024",
+          link: "/man",
+          image: await imageService.getCategoryImage('man')
+        },
+        {
+          id: "2",
+          title: "WOMAN",
+          description: "Spring/Summer 2024",
+          link: "/woman",
+          image: await imageService.getCategoryImage('woman')
+        },
+        {
+          id: "3",
+          title: "KIDS",
+          description: "Spring/Summer 2024",
+          link: "/kids",
+          image: await imageService.getCategoryImage('kids')
+        }
+      ];
+      setCollections(collectionsData);
+    };
+
+    initCollections();
+  }, []);
 
   const { data: newArrivals } = useQuery({
     queryKey: ['products', 'new'],
