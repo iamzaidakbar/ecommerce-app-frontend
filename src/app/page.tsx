@@ -130,8 +130,8 @@ export default function HomePage() {
             <div className="grid grid-cols-4 gap-8">
               {newArrivals?.map((product) => (
                 <Link
-                  key={product.id}
-                  href={`/products/${product.id}`}
+                  key={product._id}
+                  href={`/product/${product._id}`}
                   className="group"
                 >
                   <motion.div

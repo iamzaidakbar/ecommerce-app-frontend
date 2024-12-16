@@ -1,14 +1,17 @@
 import { imageService } from './image.service';
 
 export interface Product {
-  id: string;
+  _id: string;
   name: string;
-  price: number;
   description: string;
+  price: number;
   category: string;
   imageUrl: string;
   stock: number;
+  isActive: boolean;
   createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 export interface Order {
@@ -57,54 +60,69 @@ export interface FavoriteItem {
 export const mockData = {
   products: await Promise.all([
     {
-      id: "1",
+      _id: "1",
       name: "Oversized Cotton T-Shirt",
       price: 29.99,
       description: "Premium cotton oversized t-shirt with minimalist design",
       category: "clothing",
       imageUrl: await imageService.getCategoryImage('tshirt'),
       stock: 100,
-      createdAt: "2024-01-15T10:00:00Z"
+      isActive: true,
+      createdAt: "2024-01-15T10:00:00Z",
+      updatedAt: "2024-01-15T10:00:00Z",
+      __v: 0
     },
     {
-      id: "2",
-      name: "High-Waisted Jeans",
-      price: 89.99,
-      description: "Classic high-waisted jeans with modern fit",
+      _id: "2",
+      name: "Slim Fit Jeans",
+      price: 59.99,
+      description: "Classic blue slim fit jeans with stretch",
       category: "clothing",
       imageUrl: await imageService.getCategoryImage('jeans'),
+      stock: 75,
+      isActive: true,
+      createdAt: "2024-01-15T10:30:00Z",
+      updatedAt: "2024-01-15T10:30:00Z",
+      __v: 0
+    },
+    {
+      _id: "3",
+      name: "Leather Sneakers",
+      price: 89.99,
+      description: "White leather sneakers with minimal design",
+      category: "shoes",
+      imageUrl: await imageService.getCategoryImage('sneakers'),
       stock: 50,
-      createdAt: "2024-01-15T11:00:00Z"
+      isActive: true,
+      createdAt: "2024-01-15T11:00:00Z",
+      updatedAt: "2024-01-15T11:00:00Z",
+      __v: 0
     },
     {
-      id: "3",
-      name: "Leather Crossbody Bag",
-      price: 149.99,
-      description: "Elegant leather crossbody bag with gold hardware",
-      category: "accessories",
-      imageUrl: await imageService.getCategoryImage('bag'),
-      stock: 30,
-      createdAt: "2024-01-15T12:00:00Z"
-    },
-    {
-      id: "4",
+      _id: "4",
       name: "Wool Blend Coat",
-      price: 299.99,
-      description: "Classic wool blend coat in camel color",
+      price: 199.99,
+      description: "Elegant wool blend winter coat in charcoal grey",
       category: "outerwear",
       imageUrl: await imageService.getCategoryImage('coat'),
       stock: 25,
-      createdAt: "2024-01-15T13:00:00Z"
+      isActive: true,
+      createdAt: "2024-01-15T11:30:00Z",
+      updatedAt: "2024-01-15T11:30:00Z",
+      __v: 0
     },
     {
-      id: "5",
-      name: "Silk Blouse",
-      price: 129.99,
-      description: "Luxurious silk blouse with pearl buttons",
-      category: "clothing",
-      imageUrl: await imageService.getCategoryImage('blouse'),
-      stock: 40,
-      createdAt: "2024-01-15T14:00:00Z"
+      _id: "5",
+      name: "Cotton Socks Pack",
+      price: 19.99,
+      description: "Pack of 5 comfortable cotton socks",
+      category: "accessories",
+      imageUrl: await imageService.getCategoryImage('socks'),
+      stock: 200,
+      isActive: true,
+      createdAt: "2024-01-15T12:00:00Z",
+      updatedAt: "2024-01-15T12:00:00Z",
+      __v: 0
     },
     {
       id: "6",
@@ -335,7 +353,7 @@ export const mockData = {
       productId: "1",
       quantity: 1,
       product: {
-        id: "1",
+        _id: "1",
         name: "Oversized Cotton T-Shirt",
         price: 29.99,
         description: "Premium cotton oversized t-shirt with minimalist design",
@@ -352,11 +370,11 @@ export const mockData = {
       product: {
         id: "2",
         name: "Slim Fit Jeans",
-        price: 79.99,
-        description: "Classic blue slim fit jeans with stretch comfort",
+        price: 59.99,
+        description: "Classic blue slim fit jeans with stretch",
         category: "clothing",
         imageUrl: await imageService.getCategoryImage('jeans'),
-        stock: 50,
+        stock: 75,
         createdAt: "2024-01-15T10:30:00Z"
       }
     },
@@ -367,11 +385,11 @@ export const mockData = {
       product: {
         id: "3",
         name: "Leather Sneakers",
-        price: 129.99,
-        description: "Premium white leather sneakers with comfort insole",
+        price: 89.99,
+        description: "White leather sneakers with minimal design",
         category: "shoes",
         imageUrl: await imageService.getCategoryImage('sneakers'),
-        stock: 30,
+        stock: 50,
         createdAt: "2024-01-15T11:00:00Z"
       }
     },
@@ -733,9 +751,9 @@ export const mockService = {
     return mockData.products;
   },
 
-  getProduct: async (id: string) => {
+  getProduct: async (_id: string) => {
     await new Promise(resolve => setTimeout(resolve, 500));
-    return mockData.products.find(p => p.id === id);
+    return mockData.products.find(p => p._id === _id);
   },
 
   // Orders
@@ -769,7 +787,7 @@ export const mockService = {
 
   addToCart: async (productId: string, quantity: number) => {
     await new Promise(resolve => setTimeout(resolve, 500));
-    const product = mockData.products.find(p => p.id === productId);
+    const product = mockData.products.find(p => p._id === productId);
     if (!product) throw new Error('Product not found');
 
     const cartItem = {
@@ -817,7 +835,7 @@ export const mockService = {
       mockData.favorites.splice(index, 1);
       return false; // not favorited
     } else {
-      const product = mockData.products.find(p => p.id === productId);
+      const product = mockData.products.find(p => p._id === productId);
       if (!product) throw new Error('Product not found');
       
       mockData.favorites.push({
