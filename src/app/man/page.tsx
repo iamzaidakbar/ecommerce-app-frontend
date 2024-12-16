@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { mockService } from "@/services/mock.service";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductSkeleton } from "@/components/product/ProductSkeleton";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { axiosInstance } from "@/lib/axios";
+import { Product } from "@/types/product";
 
 type GridLayout = "2x2" | "3x3" | "5x5";
 
-// Men's specific categories
 const menCategories = [
   "all",
   "clothing",
@@ -27,25 +27,35 @@ export default function ManPage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [sortBy, setSortBy] = useState("newest");
 
-  const { data: allProducts, isLoading } = useQuery({
-    queryKey: ['products'],
-    queryFn: mockService.getProducts,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['products', 'MAN', selectedCategory, priceRange, sortBy],
+    queryFn: async () => {
+      try {
+        const params = new URLSearchParams({
+          category: 'MAN',
+          ...(selectedCategory && selectedCategory !== 'all' && { subCategory: selectedCategory }),
+          minPrice: priceRange[0].toString(),
+          maxPrice: priceRange[1].toString(),
+          sortBy
+        });
+        
+        const response = await axiosInstance.get(`/products?${params}`);
+        return response.data.data.products || [];
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+        return [];
+      }
+    },
+    initialData: [],
   });
 
-  // Filter for men's products only
-  const menProducts = allProducts?.filter(product => 
-    product.category.toLowerCase() !== "women" && 
-    product.category.toLowerCase() !== "kids"
-  );
-
-  const filteredProducts = menProducts?.filter(product => {
+  const filteredProducts = data.filter((product: Product) => {
     if (selectedCategory && selectedCategory !== "all" && product.category !== selectedCategory) return false;
     if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
     return true;
   });
 
-  const sortedAndFilteredProducts = filteredProducts?.sort((a, b) => {
+  const sortedProducts = [...filteredProducts].sort((a: Product, b: Product) => {
     switch (sortBy) {
       case "price-asc":
         return a.price - b.price;
@@ -57,6 +67,14 @@ export default function ManPage() {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
   });
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
+        <p className="text-red-500">Failed to load products. Please try again later.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white pt-20">
@@ -72,17 +90,17 @@ export default function ManPage() {
         onPriceRangeChange={setPriceRange}
         sortBy={sortBy}
         onSortChange={setSortBy}
-        itemCount={sortedAndFilteredProducts?.length || 0}
+        itemCount={sortedProducts?.length || 0}
         categories={menCategories}
       />
-
+      
       {/* Products grid */}
       <main className="max-w-8xl mx-auto px-8 py-8">
         <AnimatePresence mode="wait">
           {isLoading ? (
             <ProductSkeleton layout={layout} />
           ) : (
-            <ProductGrid products={sortedAndFilteredProducts || []} layout={layout} />
+            <ProductGrid products={sortedProducts} layout={layout} />
           )}
         </AnimatePresence>
       </main>

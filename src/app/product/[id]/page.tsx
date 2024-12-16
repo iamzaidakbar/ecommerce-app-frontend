@@ -1,47 +1,50 @@
 "use client";
 
+import { use } from "react";
 import { useState } from "react";
-import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, Minus, Plus } from "lucide-react";
-import Image from "next/image";
-import { mockService } from "@/services/mock.service";
 import { Button } from "@/components/ui/Button";
+import { axiosInstance } from "@/lib/axios";
 
-export default function ProductDetailPage() {
-  const params = useParams();
-  const productId = params.id as string;
-  const queryClient = useQueryClient();
+interface ProductDetailProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default function ProductDetail({ params }: ProductDetailProps) {
+  const { id } = use(params);
   const [quantity, setQuantity] = useState(1);
+  const queryClient = useQueryClient();
 
   const { data: product, isLoading } = useQuery({
-    queryKey: ['product', productId],
-    queryFn: () => mockService.getProduct(productId),
-  });
-
-  const { data: favorites = [] } = useQuery({
-    queryKey: ['favorites'],
-    queryFn: mockService.getFavorites,
+    queryKey: ['product', id],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`/products/${id}`);
+      return response.data.data.product;
+    },
   });
 
   const addToCartMutation = useMutation({
-    mutationFn: () => mockService.addToCart(productId, quantity),
+    mutationFn: async () => {
+      const response = await axiosInstance.post('/cart', {
+        productId: id,
+        quantity
+      });
+      return response.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
+    onError: (error) => {
+      console.error('Failed to add to cart:', error);
+    }
   });
 
-  const toggleFavoriteMutation = useMutation({
-    mutationFn: () => mockService.toggleFavorite(productId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['favorites'] });
-    },
-  });
-
-  const isFavorite = favorites.some(fav => fav.productId === productId);
-
-  if (isLoading || !product) {
+  if (isLoading) {
     return (
       <div className="min-h-screen pt-40 px-8">
         <div className="max-w-6xl mx-auto animate-pulse">
@@ -62,6 +65,14 @@ export default function ProductDetailPage() {
     );
   }
 
+  if (!product) {
+    return (
+      <div className="min-h-screen pt-40 px-8 flex items-center justify-center">
+        <p className="text-red-500">Product not found</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pt-40 px-8">
       <div className="max-w-6xl mx-auto">
@@ -78,6 +89,7 @@ export default function ProductDetailPage() {
               fill
               className="object-cover"
               priority
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           </motion.div>
 
@@ -90,10 +102,8 @@ export default function ProductDetailPage() {
             <div className="max-w-[360px]">
               <div className="flex items-start justify-between mb-4">
                 <h1 className="text-[11px] uppercase tracking-wider">{product.name}</h1>
-                <button onClick={() => toggleFavoriteMutation.mutate()}>
-                  <Heart
-                    className={`w-4 h-4 ${isFavorite ? 'fill-black' : ''}`}
-                  />
+                <button>
+                  <Heart className="w-4 h-4" />
                 </button>
               </div>
 
@@ -114,7 +124,7 @@ export default function ProductDetailPage() {
 
               {/* Size Selection */}
               <div className="mb-8">
-                <div className="text-[11px] mb-2">BLACK | {product.id}</div>
+                <div className="text-[11px] mb-2">BLACK | {product._id}</div>
                 <div className="grid grid-cols-2 gap-1 mb-4">
                   {['S', 'M', 'L', 'XL', 'XXL'].map((size) => (
                     <button
@@ -146,7 +156,7 @@ export default function ProductDetailPage() {
                     </span>
                     <button
                       onClick={() => setQuantity(prev => prev + 1)}
-                      disabled={quantity >= product.stock}
+                      disabled={quantity >= (product.stock || 0)}
                       className="text-gray-500 disabled:opacity-50"
                     >
                       <Plus className="w-3 h-3" />
@@ -161,10 +171,18 @@ export default function ProductDetailPage() {
                   onClick={() => addToCartMutation.mutate()}
                   isLoading={addToCartMutation.isPending}
                   loadingText="ADDING..."
-                  className="text-[11px] tracking-wider py-3"
+                  className="text-[11px] tracking-wider py-3 w-full"
                 >
                   ADD TO BAG
                 </Button>
+
+                {addToCartMutation.isSuccess && (
+                  <p className="text-[11px] text-green-600">Added to cart successfully!</p>
+                )}
+
+                {addToCartMutation.isError && (
+                  <p className="text-[11px] text-red-600">Failed to add to cart. Please try again.</p>
+                )}
               </div>
 
               {/* Additional Info */}

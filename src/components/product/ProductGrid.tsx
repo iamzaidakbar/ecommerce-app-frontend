@@ -2,9 +2,9 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
-import { Product } from "@/services/mock.service";
+import { Product } from "@/types/product";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { mockService } from "@/services/mock.service";
+import { axiosInstance } from "@/lib/axios";
 
 interface ProductGridProps {
   products: Product[];
@@ -21,10 +21,20 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
   };
 
   const addToCartMutation = useMutation({
-    mutationFn: (productId: string) => mockService.addToCart(productId, 1),
+    mutationFn: async (productId: string) => {
+      const response = await axiosInstance.post('/cart', {
+        productId,
+        quantity: 1
+      });
+      return response.data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
+    onError: (error) => {
+      console.error('Failed to add to cart:', error);
+      // You might want to add a toast notification here
+    }
   });
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -42,7 +52,7 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
     } else if (productCard) {
       const productId = productCard.getAttribute('data-product-id');
       if (productId) {
-        router.push(`/products/${productId}`);
+        router.push(`/product/${productId}`);
       }
     }
   };
@@ -53,15 +63,15 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
       className={`grid ${gridConfig[layout]} gap-1`}
       onClick={handleClick}
     >
-      {products.map((product) => (
+      {products.map((product: Product) => (
         <motion.div
-          key={product.id}
+          key={product._id}
           layout
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="group cursor-pointer mb-4"
-          data-product-id={product.id}
+          data-product-id={product._id}
         >
           <div className="relative aspect-[3/4] overflow-hidden">
             <Image
@@ -70,15 +80,15 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              loading="lazy"
               quality={90}
+              priority
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors">
               <motion.button
                 initial={{ opacity: 0 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                data-add-to-cart={product.id}
+                data-add-to-cart={product._id}
                 className="absolute bottom-4 right-4 p-2 bg-white text-black rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <ShoppingBag className="w-4 h-4" />
