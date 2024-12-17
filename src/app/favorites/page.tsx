@@ -14,7 +14,7 @@ import React, { useState } from 'react'
 
 
 const FavoritesPage = () => {
-    const [layout, setLayout] = useState<GridLayout>("5x5");
+    const [layout, setLayout] = useState<GridLayout>("10x10");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
     const [sortBy, setSortBy] = useState("newest");

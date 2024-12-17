@@ -5,44 +5,131 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { mockService } from "@/services/mock.service";
 import { Button } from "@/components/ui/Button";
-import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { axiosInstance } from "@/lib/axios";
+import useStore from "@/store/useStore";
+import { useState } from "react";
+
+// Define types for the cart items and user
+interface Product {
+  name: string;
+  price: number;
+  imageUrl: string;
+  _id: string;
+}
+
+interface CartItem {
+  _id: string;
+  product: Product;
+  quantity: number;
+}
 
 export default function CartPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { currentUser } = useStore();
 
-  const { data: cartItems, isLoading } = useQuery({
-    queryKey: ['cart'],
-    queryFn: mockService.getCart,
+  // Manage individual loading states
+  const [loadingStates, setLoadingStates] = useState<{
+    clearingCart: boolean;
+    checkingOut: boolean;
+    updatingItem: string | null; // Item ID being updated
+    removingItem: string | null; // Item ID being removed
+  }>({
+    clearingCart: false,
+    checkingOut: false,
+    updatingItem: null,
+    removingItem: null,
+  });
+
+  const {
+    data: cartItems = [],
+    isLoading,
+    error,
+  } = useQuery<CartItem[], Error>({
+    queryKey: ["cart", "cartItems"],
+    queryFn: async () => {
+      const response = await axiosInstance.get(`/cart`);
+      return response.data.data.cart.items || [];
+    },
   });
 
   const removeFromCartMutation = useMutation({
-    mutationFn: mockService.removeFromCart,
+    mutationFn: async (id: string) => {
+      const response = await axiosInstance.delete(`/cart/${id}`);
+      return response.data;
+    },
+    onMutate: (id) => {
+      setLoadingStates((prev) => ({ ...prev, removingItem: id }));
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+    onError: () => {
+      setLoadingStates((prev) => ({ ...prev, removingItem: null }));
+    },
+    onSettled: () => {
+      setLoadingStates((prev) => ({ ...prev, removingItem: null }));
     },
   });
 
   const updateQuantityMutation = useMutation({
-    mutationFn: ({ id, quantity }: { id: string; quantity: number }) =>
-      mockService.updateCartItemQuantity(id, quantity),
+    mutationFn: async ({
+      productId,
+      quantity,
+    }: {
+      productId: string;
+      quantity: number;
+    }) => {
+      const response = await axiosInstance.put(`/cart`, {
+        productId,
+        quantity,
+      });
+      return response.data;
+    },
+    onMutate: ({ productId }) => {
+      setLoadingStates((prev) => ({ ...prev, updatingItem: productId }));
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+    onError: () => {
+      setLoadingStates((prev) => ({ ...prev, updatingItem: null }));
+    },
+    onSettled: () => {
+      setLoadingStates((prev) => ({ ...prev, updatingItem: null }));
     },
   });
 
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: mockService.getCurrentUser,
+  const clearCartMutation = useMutation({
+    mutationFn: async () => {
+      const response = await axiosInstance.delete(`/cart/clear`);
+      return response.data;
+    },
+    onMutate: () => {
+      setLoadingStates((prev) => ({ ...prev, clearingCart: true }));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+    onError: () => {
+      setLoadingStates((prev) => ({ ...prev, clearingCart: false }));
+    },
+    onSettled: () => {
+      setLoadingStates((prev) => ({ ...prev, clearingCart: false }));
+    },
   });
 
-  const totalAmount = cartItems?.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0
-  ) ?? 0;
+  const handleCheckout = async () => {
+    setLoadingStates((prev) => ({ ...prev, checkingOut: true }));
+    try {
+      router.push("/checkout");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, checkingOut: false }));
+    }
+  };
+  
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -61,6 +148,16 @@ export default function CartPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
+        <p className="text-red-500">
+          Failed to load cart items. Please try again later.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pt-20 px-8">
       <div className="max-w-4xl mx-auto">
@@ -70,7 +167,7 @@ export default function CartPage() {
           <AnimatePresence mode="popLayout">
             {cartItems.map((item) => (
               <motion.div
-                key={item.id}
+                key={item._id}
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -83,17 +180,27 @@ export default function CartPage() {
                     alt={item.product.name}
                     fill
                     className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    priority
                   />
                 </div>
 
                 <div className="flex-1 space-y-4">
                   <div className="flex justify-between">
-                    <h3 className="text-sm font-light">{item.product.name}</h3>
-                    <button
-                      onClick={() => removeFromCartMutation.mutate(item.id)}
-                      className="text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                    <h3
+                      onClick={() => router.push(`/product/${item.product._id}`)}
+                      className="text-sm font-light hover:underline cursor-pointer"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      {item.product.name}
+                    </h3>
+                    <button
+                      onClick={() =>
+                        removeFromCartMutation.mutate(item._id)
+                      }
+                      className="text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                      disabled={loadingStates.removingItem === item._id}
+                    >
+                      {loadingStates.removingItem === item._id ? "REMOVING..." : <Trash2 className="w-4 h-4" />}
                     </button>
                   </div>
 
@@ -105,12 +212,15 @@ export default function CartPage() {
                     <button
                       onClick={() =>
                         updateQuantityMutation.mutate({
-                          id: item.id,
-                          quantity: item.quantity - 1,
+                          productId: item.product._id,
+                          quantity: item.quantity > 1 ? item.quantity - 1 : 1,
                         })
                       }
-                      disabled={item.quantity <= 1}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
+                      disabled={
+                        item.quantity <= 1 ||
+                        loadingStates.updatingItem === item.product._id
+                      }
+                      className="p-1 hover:bg-gray-100  rounded-full transition-colors disabled:opacity-50"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
@@ -118,11 +228,12 @@ export default function CartPage() {
                     <button
                       onClick={() =>
                         updateQuantityMutation.mutate({
-                          id: item.id,
+                          productId: item.product._id,
                           quantity: item.quantity + 1,
                         })
                       }
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                      disabled={loadingStates.updatingItem === item.product._id}
+                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -135,29 +246,31 @@ export default function CartPage() {
           <div className="pt-8 space-y-6">
             <div className="flex justify-between text-lg">
               <span>Total</span>
-              <span>${totalAmount.toFixed(2)}</span>
+              <span>${cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0).toFixed(2)}</span>
             </div>
 
-            <Button
-              onClick={() => router.push('/checkout')}
-              disabled={!user?.isVerified}
-              className="text-[11px] tracking-wider py-3"
-            >
-              {!user?.isVerified ? (
-                <span className="flex items-center space-x-2">
-                  <span>VERIFY EMAIL TO CHECKOUT</span>
-                  <ArrowRight className="w-3 h-3" />
-                </span>
-              ) : (
-                <span className="flex items-center space-x-2">
-                  <span>PROCEED TO CHECKOUT</span>
-                  <ArrowRight className="w-3 h-3" />
-                </span>
-              )}
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                onClick={() => clearCartMutation.mutate()}
+                disabled={loadingStates.clearingCart}
+              >
+                {loadingStates.clearingCart ? "CLEARING CART..." : "CLEAR CART"}
+              </Button>
+
+              <Button
+                onClick={handleCheckout}
+                disabled={!currentUser?.isEmailVerified || loadingStates.checkingOut}
+              >
+                {loadingStates.checkingOut
+                  ? "CHECKING OUT..."
+                  : !currentUser?.isEmailVerified
+                  ? "VERIFY EMAIL TO CHECKOUT"
+                  : "PROCEED TO CHECKOUT"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

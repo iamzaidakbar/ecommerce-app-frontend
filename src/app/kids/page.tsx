@@ -8,7 +8,7 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductSkeleton } from "@/components/product/ProductSkeleton";
 import { PageHeader } from "@/components/layout/PageHeader";
 
-type GridLayout = "2x2" | "3x3" | "5x5";
+type GridLayout = "2x2" | "6x6" | "10x10";
 
 // Kids specific categories
 const kidsCategories = [
@@ -25,7 +25,7 @@ const kidsCategories = [
 ];
 
 export default function KidsPage() {
-  const [layout, setLayout] = useState<GridLayout>("5x5");
+  const [layout, setLayout] = useState<GridLayout>("10x10");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]); // Lower price range for kids
   const [sortBy, setSortBy] = useState("newest");

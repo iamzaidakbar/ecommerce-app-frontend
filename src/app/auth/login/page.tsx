@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { loginSchema, LoginFormData } from '@/lib/validations/auth';
 import { useFormValidation } from '@/hooks/useFormValidation';
+import useStore from "@/store/useStore";
 
 const LoginPage = () => {
   const { login, isLoading, error, setError } = useAuth();
@@ -16,6 +17,7 @@ const LoginPage = () => {
     email: "",
     password: "",
   });
+  const { updateUser } = useStore();
   
   const { errors, validateForm, handleFieldValidation } = 
     useFormValidation<LoginFormData>(loginSchema);
@@ -30,7 +32,8 @@ const LoginPage = () => {
     e.preventDefault();
     if (await validateForm(formData)) {
       try {
-        await login(formData);
+        const user = await login(formData);
+        updateUser(user);
       } catch (error) {
         console.error("Login failed:", error);
       }

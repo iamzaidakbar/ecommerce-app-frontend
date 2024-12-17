@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Grid2X2, Grid3X3, LayoutGrid } from "lucide-react";
 import { FilterBar } from "@/components/product/FilterBar";
 
-type GridLayout = "2x2" | "3x3" | "5x5";
+type GridLayout = "2x2" | "6x6" | "10x10";
 
 interface PageHeaderProps {
   title: string;
@@ -24,8 +24,8 @@ interface PageHeaderProps {
 
 const layoutButtons = [
   { layout: "2x2" as GridLayout, icon: Grid2X2 },
-  { layout: "3x3" as GridLayout, icon: Grid3X3 },
-  { layout: "5x5" as GridLayout, icon: LayoutGrid },
+  { layout: "6x6" as GridLayout, icon: Grid3X3 },
+  { layout: "10x10" as GridLayout, icon: LayoutGrid },
 ];
 
 export function PageHeader({

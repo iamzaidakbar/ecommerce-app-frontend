@@ -8,7 +8,7 @@ import { axiosInstance } from "@/lib/axios";
 
 interface ProductGridProps {
   products: Product[];
-  layout: "2x2" | "3x3" | "5x5";
+  layout: "2x2" | "6x6" | "10x10";
 }
 
 export function ProductGrid({ products, layout }: ProductGridProps) {
@@ -16,8 +16,8 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
   const queryClient = useQueryClient();
   const gridConfig = {
     "2x2": "grid-cols-2",
-    "3x3": "grid-cols-3",
-    "5x5": "grid-cols-5"
+    "6x6": "grid-cols-6",
+    "10x10": "grid-cols-10"
   };
 
   const addToCartMutation = useMutation({
@@ -60,7 +60,7 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
   return (
     <motion.div
       layout
-      className={`grid ${gridConfig[layout]} gap-1`}
+      className={`grid ${gridConfig[layout]} border-collapse border-l border-black ${products?.length > 10 ? "border-t" : ''}`}
       onClick={handleClick}
     >
       {products.map((product: Product) => (
@@ -70,7 +70,7 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="group cursor-pointer mb-4"
+          className={`group cursor-pointer border-r border-black ${products?.length < 10 ? "border-t" : ''}`}
           data-product-id={product._id}
         >
           <div className="relative aspect-[3/4] overflow-hidden">
@@ -95,12 +95,14 @@ export function ProductGrid({ products, layout }: ProductGridProps) {
               </motion.button>
             </div>
           </div>
-          <div className="mt-4 space-y-1">
-            <h3 className="text-sm font-light">{product.name}</h3>
-            <p className="text-sm text-gray-500">
-              ${product.price.toFixed(2)}
+          {layout !== "10x10" && (
+            <div className="py-2 px-2 border-b border-t border-black">
+              <h3 className="text-xs font-light uppercase">{product.name}</h3>
+              <p className="text-xs font-light uppercase">
+                ${product.price.toFixed(2)}
             </p>
-          </div>
+            </div>
+          )}
         </motion.div>
       ))}
     </motion.div>

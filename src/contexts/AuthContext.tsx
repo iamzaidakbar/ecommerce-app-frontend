@@ -41,10 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
       const response = await authService.login(credentials);
-      console.log(response, 'response1');
       if (response && response.token) {
         setIsAuthenticated(true);
-        console.log(response, 'response2');
         router.push('/');
       }
     } catch (error) {

@@ -93,7 +93,7 @@ export default function HomePage() {
         <section className="py-20 px-8 bg-white">
           <div className="max-w-8xl mx-auto">
             <h2 className="text-3xl font-light tracking-wider mb-12 text-black">COLLECTIONS</h2>
-            <div className="grid grid-cols-3 gap-8">
+            <div className="grid grid-cols-4 gap-8">
               {collections.map((collection) => (
                 <Link
                   key={collection.id}

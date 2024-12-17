@@ -12,27 +12,39 @@ import { axiosInstance } from "@/lib/axios";
 import { GridLayout } from "@/types/gridLayout";
 
 export default function ViewAllPage() {
-  const [layout, setLayout] = useState<GridLayout>("5x5");
+  const [layout, setLayout] = useState<GridLayout>("10x10");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [sortBy, setSortBy] = useState("newest");
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['products', 'VIEW_ALL', selectedCategory, priceRange, sortBy],
-    queryFn: async () => {
-      try {
-        const response = await axiosInstance.get(`/products`);
-        return response.data.data.products || [];
-      } catch (error) {
-        console.error('Failed to fetch products:', error);
-        return [];
-      }
-    },
-    initialData: [],
-  });
+   // Fetch products only once on initial load
+ const { data: allProducts = [], isLoading, error } = useQuery({
+  queryKey: ["products", "VIEW_ALL"],
+  queryFn: async () => {
+    try {
+      const response = await axiosInstance.get(`/products`);
+      return response.data.data.products || [];
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+      throw error; // Rethrow to handle in React Query
+    }
+  },
+});
 
-  const { filteredProducts } = useFilter({ products: products || [], selectedCategory: selectedCategory || "all", priceRange });
+  const { filteredProducts } = useFilter({ products: allProducts, selectedCategory: selectedCategory || "all", priceRange });
   const { sortedProducts } = useSort({ products: filteredProducts, sortBy });
+
+
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
+        <p className="text-red-500">
+          Failed to load products. Please try again later.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white pt-20">
