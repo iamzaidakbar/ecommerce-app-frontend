@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +21,14 @@ export default function ProfileSection({ userData }: ProfileSectionProps) {
     lastName: userData?.lastName || "",
     email: userData?.email || "",
   });
+
+  useEffect(() => {
+    setFormData({
+      firstName: userData?.firstName || "",
+      lastName: userData?.lastName || "",
+      email: userData?.email || "",
+    });
+  }, [userData]);
 
   const { errors: profileErrors, validateForm: validateProfile, handleFieldValidation: validateProfileField } = 
     useFormValidation<ProfileFormData>(profileSchema);

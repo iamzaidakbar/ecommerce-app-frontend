@@ -8,11 +8,10 @@ import { axiosInstance } from "@/lib/axios";
 interface ProductFormData {
   name: string;
   description: string;
-  price: string;
+  price: number;
   category: string;
-  stock: string;
+  stock: number;
   imageUrl: string;
-  images: FileList | null;
 }
 
 type ProductFormErrors = {
@@ -31,56 +30,16 @@ export default function ProductsSection() {
   const [productForm, setProductForm] = useState<ProductFormData>({
     name: "",
     description: "",
-    price: "",
+    price: 0,
     category: "",
-    stock: "",
+    stock: 0,
     imageUrl: "",
-    images: null
   });
 
-  const [productErrors, setProductErrors] = useState<ProductFormErrors>({});
-
-  const validateProductForm = (data: ProductFormData) => {
-    const errors: ProductFormErrors = {};
-    
-    if (!data.name.trim()) errors.name = "Product name is required";
-    if (!data.description.trim()) errors.description = "Product description is required";
-    if (!data.category.trim()) errors.category = "Category is required";
-    
-    const price = parseFloat(data.price);
-    if (isNaN(price) || price <= 0) errors.price = "Price must be a positive number";
-    
-    const stock = parseInt(data.stock);
-    if (isNaN(stock) || stock <= 0) errors.stock = "Stock must be a positive integer";
-    
-    setProductErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
 
   const createProductMutation = useMutation({
-    mutationFn: async (data: ProductFormData) => {
-      const formData = new FormData();
-      
-      formData.append('name', data.name.trim());
-      formData.append('description', data.description.trim());
-      formData.append('price', data.price);
-      formData.append('category', data.category.trim());
-      formData.append('stock', data.stock);
-      
-      if (data.imageUrl?.trim()) {
-        formData.append('imageUrl', data.imageUrl.trim());
-      }
-
-      if (data.images && data.images.length > 0) {
-        const image = data.images[0];
-        formData.append('image', image);
-      }
-
-      const response = await axiosInstance.post('/products', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+    mutationFn: async () => {
+      const response = await axiosInstance.post('/products', productForm);
       return response.data;
     },
     onSuccess: () => {
@@ -88,42 +47,28 @@ export default function ProductsSection() {
       setProductForm({
         name: "",
         description: "",
-        price: "",
+        price: 0,
         category: "",
-        stock: "",
+        stock: 0,
         imageUrl: "",
-        images: null
       });
-      setProductErrors({});
     },
   });
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const target = e.target as HTMLInputElement;
-    const { name, value } = target;
-    
-    if (target.type === 'file' && target.files) {
-      setProductForm(prev => ({
-        ...prev,
-        images: target.files
-      }));
-    } else {
-      setProductForm(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setProductForm(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validateProductForm(productForm)) {
-      try {
-        await createProductMutation.mutateAsync(productForm);
-      } catch (error: unknown) {
+    try {
+      await createProductMutation.mutateAsync();
+    } catch (error: unknown) {
         const apiError = error as { response?: { data?: { errors?: ApiError[] } } };
         if (apiError.response?.data?.errors) {
           const serverErrors: ProductFormErrors = {};
@@ -132,10 +77,8 @@ export default function ProductsSection() {
               serverErrors[err.path] = err.msg;
             }
           });
-          setProductErrors(serverErrors);
         }
       }
-    }
   };
 
   return (
@@ -148,14 +91,9 @@ export default function ProductsSection() {
             name="name"
             value={productForm.name}
             onChange={handleInputChange}
-            placeholder="Product Name"
-            className={`w-full border p-3 text-[11px] focus:outline-none ${
-              productErrors.name ? 'border-red-500' : 'border-gray-200'
-            }`}
+            placeholder="Product Name *"
+            className={`w-full border p-3 text-[11px] focus:outline-none`}
           />
-          {productErrors.name && (
-            <p className="mt-1 text-[10px] text-red-500">{productErrors.name}</p>
-          )}
         </div>
 
         <div>
@@ -163,14 +101,9 @@ export default function ProductsSection() {
             name="description"
             value={productForm.description}
             onChange={handleInputChange}
-            placeholder="Product Description"
-            className={`w-full border p-3 text-[11px] focus:outline-none min-h-[100px] ${
-              productErrors.description ? 'border-red-500' : 'border-gray-200'
-            }`}
+            placeholder="Product Description *"
+            className={`w-full border p-3 text-[11px] focus:outline-none min-h-[100px]`}
           />
-          {productErrors.description && (
-            <p className="mt-1 text-[10px] text-red-500">{productErrors.description}</p>
-          )}
         </div>
 
         <div>
@@ -179,16 +112,11 @@ export default function ProductsSection() {
             name="price"
             value={productForm.price}
             onChange={handleInputChange}
-            placeholder="Price"
+            placeholder="Price *"
             step="0.01"
             min="0"
-            className={`w-full border p-3 text-[11px] focus:outline-none ${
-              productErrors.price ? 'border-red-500' : 'border-gray-200'
-            }`}
+            className={`w-full border p-3 text-[11px] focus:outline-none`}
           />
-          {productErrors.price && (
-            <p className="mt-1 text-[10px] text-red-500">{productErrors.price}</p>
-          )}
         </div>
 
         <div>
@@ -197,15 +125,10 @@ export default function ProductsSection() {
             name="stock"
             value={productForm.stock}
             onChange={handleInputChange}
-            placeholder="Stock Quantity"
+            placeholder="Stock Quantity *"
             min="0"
-            className={`w-full border p-3 text-[11px] focus:outline-none ${
-              productErrors.stock ? 'border-red-500' : 'border-gray-200'
-            }`}
+            className={`w-full border p-3 text-[11px] focus:outline-none`}
           />
-          {productErrors.stock && (
-            <p className="mt-1 text-[10px] text-red-500">{productErrors.stock}</p>
-          )}
         </div>
 
         <div>
@@ -213,46 +136,25 @@ export default function ProductsSection() {
             name="category"
             value={productForm.category}
             onChange={handleInputChange}
-            className={`w-full border p-3 text-[11px] focus:outline-none ${
-              productErrors.category ? 'border-red-500' : 'border-gray-200'
-            }`}
+            className={`w-full border p-3 text-[11px] focus:outline-none`}
           >
-            <option value="">Select Category</option>
+            <option value="">Select Category *</option>
             <option value="MAN">MAN</option>
             <option value="WOMAN">WOMAN</option>
             <option value="KID">KIDS</option>
           </select>
-          {productErrors.category && (
-            <p className="mt-1 text-[10px] text-red-500">{productErrors.category}</p>
-          )}
         </div>
 
         <div>
-          <div className="text-[11px] mb-2">PRODUCT IMAGES</div>
           <div className="space-y-3">
             <input
               type="url"
               name="imageUrl"
               value={productForm.imageUrl}
               onChange={handleInputChange}
-              placeholder="Image URL (Optional)"
+              placeholder="Image URL *"
               className="w-full border border-gray-200 p-3 text-[11px] focus:outline-none"
             />
-            <div className="text-center p-3 border border-dashed border-gray-200">
-              <input
-                type="file"
-                name="images"
-                onChange={handleInputChange}
-                accept="image/*"
-                className="w-full text-[11px] focus:outline-none file:mr-4 file:py-2 file:px-4
-                  file:rounded-full file:border-0 file:text-[11px]
-                  file:bg-black file:text-white
-                  hover:file:bg-black/90"
-              />
-              <p className="mt-2 text-[10px] text-gray-500">
-                Or drag and drop image files here
-              </p>
-            </div>
           </div>
         </div>
 
