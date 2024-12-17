@@ -10,82 +10,88 @@ import { axiosInstance } from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import { Product } from "@/types/product";
 
-interface ProductDetailProps {
-  params: Promise<{
-    id: string;
-  }>;
+
+interface WishlistItem {
+  _id: string;
 }
 
-export default function ProductDetail({ params }: ProductDetailProps) {
+interface CartItem {
+  product: Product;
+}
+
+export default function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [quantity, setQuantity] = useState(1);
   const queryClient = useQueryClient();
   const router = useRouter();
 
-
-  // Fetch wishlist to check if product is in it
-  const { data: wishlist, isLoading: wishlistLoading } = useQuery({
-    queryKey: ['wishlist'],
+  // Fetch wishlist
+  const { data: wishlist = [], isLoading: wishlistLoading } = useQuery<WishlistItem[]>({
+    queryKey: ["wishlist"],
     queryFn: async () => {
-      const response = await axiosInstance.get('/wishlist');
+      const response = await axiosInstance.get("/wishlist");
       return response.data.data.wishlist.products;
     },
   });
 
-   // Fetch cart to check if product is in it
-   const { data: cart, isLoading: cartLoading } = useQuery({
-    queryKey: ['cart'],
+  // Fetch cart
+  const { data: cart = [], isLoading: cartLoading } = useQuery<CartItem[]>({
+    queryKey: ["cart"],
     queryFn: async () => {
-      const response = await axiosInstance.get('/cart');
+      const response = await axiosInstance.get("/cart");
       return response.data.data.cart.items;
     },
   });
-
-  const isInWishlist = wishlist?.some((item: { _id: string }) => item._id === id);
-  const isInCart = cart?.some((item: { product: Product }) => item.product._id === id);
-
-  const { data: product, isLoading: productLoading } = useQuery({
-    queryKey: ['product', id],
+  
+  // Fetch product details
+  const { data: product, isLoading: productLoading } = useQuery<Product>({
+    queryKey: ["product", id],
     queryFn: async () => {
       const response = await axiosInstance.get(`/products/${id}`);
       return response.data.data.product;
     },
   });
+  
+  // Check if product is in wishlist or cart
+  const isInWishlist = wishlist.some((item) => item._id === id);
+  const isInCart = cart.some((item) => item.product._id === id);
 
+
+  // Add to cart mutation
   const addToCartMutation = useMutation({
     mutationFn: async () => {
-      const response = await axiosInstance.post('/cart', {
+      const response = await axiosInstance.post("/cart", {
         productId: id,
         quantity,
       });
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
     onError: (error) => {
-      console.error('Failed to add to cart:', error);
+      console.error("Failed to add to cart:", error);
     },
   });
 
+  // Toggle wishlist mutation
   const toggleWishlistMutation = useMutation({
     mutationFn: async () => {
       if (isInWishlist) {
-        console.log('removing from wishlist', id);
         return await axiosInstance.delete(`/wishlist/${id}`);
       } else {
-        console.log('adding to wishlist', id);
-        return await axiosInstance.post('/wishlist', { productId: id });
+        return await axiosInstance.post("/wishlist", { productId: id });
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
     },
     onError: (error) => {
-      console.error('Failed to update wishlist:', error);
+      console.error("Failed to update wishlist:", error);
     },
   });
 
+  // Loading state
   if (productLoading || wishlistLoading || cartLoading) {
     return (
       <div className="min-h-screen pt-40 px-8">
@@ -107,6 +113,7 @@ export default function ProductDetail({ params }: ProductDetailProps) {
     );
   }
 
+  // Product not found
   if (!product) {
     return (
       <div className="min-h-screen pt-40 px-8 flex items-center justify-center">
